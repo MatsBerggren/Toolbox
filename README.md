@@ -1,29 +1,27 @@
-# Toolbox Image (Standalone Build Repo)
+# Toolbox: build + GitOps deploy (namespace: system-tools, utan RBAC)
 
-Detta repo bygger och publicerar en verktygscontainer med nano, net-tools, iproute2, ping, dnsutils, curl, tcpdump, mtr, nmap, jq, iperf3 m.m.
+Den här zippen innehåller allt du behöver för att bygga och rulla ut en egen felsökningscontainer.
+- **Build**: `docker/Dockerfile`, `Makefile`, GitHub Actions
+- **GitOps**: Kustomize base + overlay (`homelab`) under `apps/system-tools/toolbox/deploy`
 
-## Snabbstart (lokalt)
+> Namespace `system-tools` **skapas inte här** – det antas finnas redan.
+
+## Bygg & pusha
 ```bash
 make build print
-make push-latest   # kräver docker login mot ditt registry
+make push-latest
 ```
 
-## GitHub Container Registry (GHCR)
-1. Skapa repo på GitHub och pusha denna kod.
-2. Aktivera GitHub Actions.
-3. Vid push till `main` bygger workflow `build-push.yml` och publicerar:
-   - `ghcr.io/<owner>/toolbox:latest`
-   - `ghcr.io/<owner>/toolbox:<git-sha>`
+Eller via GitHub Actions (push till `main`).
 
-## Använd i ditt GitOps-repo
-Peka din Deployment till publicerade imagen, t.ex.
-```yaml
-containers:
-  - name: toolbox
-    image: ghcr.io/<owner>/toolbox:latest
-    command: ["bash","-lc","sleep infinity"]
-    tty: true
-    stdin: true
+## Deploy med Kustomize
+```bash
+kubectl apply -k apps/system-tools/toolbox/deploy/overlays/homelab
+kubectl -n system-tools get deploy,pod
+kubectl -n system-tools exec -it deploy/toolbox -- bash
 ```
 
-> Detta repo innehåller **endast** byggdelen. Ditt GitOps-repo behåller kustomize/overlays m.m.
+## Anpassningar
+- Byt registry/owner i `Makefile` (`REGISTRY`) och i `kustomization.yaml` (`images:`) om du vill.
+- `hostNetwork: true` används i `homelab` overlay för smidigare nätverksfelsökning. Ta bort i prod.
+- Kör som root för verktyg som `tcpdump`. Byt gärna säkerhetsprofil i hårdare miljöer.
