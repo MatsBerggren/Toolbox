@@ -1,4 +1,4 @@
-REGISTRY ?= ghcr.io/MatsBerggren
+REGISTRY ?= ghcr.io/matsberggren
 IMAGE    ?= $(REGISTRY)/toolbox
 TAG      ?= $(shell date +%Y%m%d-%H%M)-$$(git rev-parse --short HEAD 2>/dev/null || echo local)
 PLATFORM ?= linux/amd64
